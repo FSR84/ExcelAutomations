@@ -14,7 +14,7 @@ df_third = pd.read_excel(excel2)
 print(df_first)
 print(df_first["Product"])
 
-# create a union between three data sources; all 3 have the same columns; adds an index column
+# create a union between three data sources; all 3 have the same columns; adds an index in column A, but without a column name in A1
 df_all = pd.concat([df_first, df_second, df_third])
 
 print(df_all)
