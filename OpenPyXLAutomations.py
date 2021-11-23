@@ -1,5 +1,5 @@
 from openpyxl.utils.cell import get_column_letter, column_index_from_string
-from openpyxl.styles import Font, PatternFill, Border, Side
+from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 import openpyxl
 import os
 
@@ -12,6 +12,12 @@ wb = openpyxl.load_workbook(curr_dir + excel3)
 ws = wb["Shifts"]  # wb.active  # (ActiveSheet in VBA)
 
 
+# CLEANUP: umerge all cells (needs to run BEFORE you delete any rows or columns!)
+for range in list(ws.merged_cells.ranges):
+    print(str(range) + " has been unmerged.")
+    ws.unmerge_cells(str(range))
+
+
 # CLEANUP: delete first row if cell B1 is empty
 if ws["B1"].value == None:
     ws.delete_rows(1, 1)
@@ -20,7 +26,11 @@ if ws["B1"].value == None:
 # CLEANUP: delete added columns
 if ws.max_column > 7:
     print("Columns " + get_column_letter(8) + ":" + get_column_letter(ws.max_column) + " have been deleted.")
-    ws.delete_cols(8, ws.max_column - 7) # ws.delete_cols(column_index_from_string("H"), ws.max_column - 7)
+    ws.delete_cols(8, ws.max_column - 7) #or# ws.delete_cols(column_index_from_string("H"), ws.max_column - 7)
+
+
+# CLEANUP: unfreeze all rows and columns
+ws.freeze_panes = "A1"
 
 
 # insert 1st row if cell B1 is not empty
@@ -33,11 +43,11 @@ if ws["A2"].value == None:
     ws["A2"] = "Index"
 
 
-# add formulas to cells in the top row; change cells to bold (ws["F1:G1"].font does not work)
+# add formulas to cells in the top row; change font (ws["F1:G1"].font does not work)
 ws["F1"].value = "=Subtotal(9,F3:F100)"
 ws["G1"].value = "=Subtotal(9,G3:G100)"
-ws["F1"].font = Font(bold=True)
-ws["G1"].font = Font(bold=True)
+ws["F1"].font = Font(size=12, bold=True)
+ws["G1"].font = Font(size=12, bold=True)
 
 
 # insert formulas to a new column
@@ -74,7 +84,7 @@ print(str(lastcol) + " is the last column number.")
 print(lastcolletter + str(lastrow) + " is the last cell in the current region.")
 
 
-# remove all borders; from row 3 onwards remove interior color (fill)
+# CLEANUP: remove all borders; from row 3 onwards remove interior color (fill)
 no_fill = PatternFill(fill_type=None)
 side = Side(border_style=None)
 no_border = Border(left=side, right=side, top=side, bottom=side)
@@ -93,6 +103,26 @@ border = Border(left=side, right=side, top=side, bottom=side)
 for row in ws.iter_rows(min_row=2, max_row=lastrow, min_col=1, max_col=lastcol):
     for cell in row:
         cell.border = border
+
+
+# resize columns & rows, set wrap text and middle-center alignment
+ws.column_dimensions["D"].width = 11
+ws.column_dimensions["E"].width = 11
+ws.column_dimensions["F"].width = 12
+ws.column_dimensions["G"].width = 12
+ws.column_dimensions["I"].width = 15
+ws.row_dimensions[1].height = 20
+
+for cell in ws["2:2"]:      
+    cell.alignment = Alignment(wrapText=True, vertical="center", horizontal="center")
+
+
+# freeze header row (2nd)
+ws.freeze_panes = "A3"
+
+
+# merge cells
+ws.merge_cells('A1:C1')
 
 
 # save workbook
